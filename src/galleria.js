@@ -3294,6 +3294,14 @@ Galleria.prototype = {
                 self._imageSize = 0;
                 var imageWidth = self._stageWidth - 2*self._options.imageMargin;
                 var imageHeight = self._stageHeight - 2*self._options.imageMargin;
+
+                // use twice as large images on retina devices
+                var retina = window.devicePixelRatio > 1 ? true : false;
+                if (retina) {
+                  imageWidth *= 2;
+                  imageHeight *= 2;
+                }
+
                 for (var i = 1; i < self._options.imageSizes.length; i++) {
                   // use this size if it fills the stage area
                   var w = parseInt(self._options.imageSizes[i].split('x')[0], 10);
@@ -4321,6 +4329,14 @@ this.prependChild( 'info', 'myElement' );
             if (self._options.imageSizes) {
               var imageWidth = self._stageWidth - 2*self._options.imageMargin;
               var imageHeight = self._stageHeight - 2*self._options.imageMargin;
+
+              // use twice as large images on retina devices
+              var retina = window.devicePixelRatio > 1 ? true : false;
+              if (retina) {
+                imageWidth *= 2;
+                imageHeight *= 2;
+              }
+
               var imageSize = 0;
               for (var i = 1; i < self._options.imageSizes.length; i++) {
                 // use this size if it fills the stage area
