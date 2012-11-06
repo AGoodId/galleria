@@ -2374,6 +2374,7 @@ Galleria.prototype = {
             imageSizes: false, // custom
             initialTransition: undef, // 1.2.4, replaces transitionInitial
             keepSource: false,
+            keepAspectRatio: true, // custom
             layerFollow: true, // 1.2.5
             lightbox: false, // 1.2.3
             lightboxFadeSpeed: 200,
@@ -2538,7 +2539,9 @@ Galleria.prototype = {
 
                     self._width = num.width;
                     self._height = num.height;
-                    self._ratio = self._ratio || num.height/num.width;
+                    if (self._options.keepAspectRatio) {
+                      self._ratio = self._ratio || num.height/num.width;
+                    }
 
                     // for some strange reason, webkit needs a single setTimeout to play ball
                     if ( Galleria.WEBKIT ) {
