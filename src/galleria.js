@@ -2415,6 +2415,7 @@ Galleria.prototype = {
             },
             wait: 5000, // 1.2.7
             width: 'auto',
+            wrapNavigation: true, // custom
             youtube: {
                 modestbranding: 1,
                 autohide: 1,
@@ -4735,7 +4736,11 @@ this.prependChild( 'info', 'myElement' );
 
     getNext : function( base ) {
         base = typeof base === 'number' ? base : this.getIndex();
-        return base === this.getDataLength() - 1 ? 0 : base + 1;
+        if (this._options.wrapNavigation) {
+          return base === this.getDataLength() - 1 ? 0 : base + 1;
+        } else {
+          return base === this.getDataLength() - 1 ? base : base + 1;
+        }
     },
 
     /**
@@ -4748,7 +4753,11 @@ this.prependChild( 'info', 'myElement' );
 
     getPrev : function( base ) {
         base = typeof base === 'number' ? base : this.getIndex();
-        return base === 0 ? this.getDataLength() - 1 : base - 1;
+        if (this._options.wrapNavigation) {
+          return base === 0 ? this.getDataLength() - 1 : base - 1;
+        } else {
+          return base === 0 ? base : base - 1;
+        }
     },
 
     /**
