@@ -1133,6 +1133,7 @@ Galleria = function() {
     // global stagewidth/height
     this._stageWidth = 0;
     this._stageHeight = 0;
+    this._imageSize = 0;
 
     // target holder
     this._target = undef;
@@ -1719,45 +1720,6 @@ Galleria = function() {
                 options.imageCrop = options.fullscreenCrop;
             }
 
-            // swap to big image if it's different from the display image
-            if ( data && data.big && data.image !== data.big ) {
-                var big    = new Galleria.Picture(),
-                    cached = big.isCached( data.big ),
-                    index  = self.getIndex(),
-                    thumb  = self._thumbnails[ index ];
-
-                self.trigger( {
-                    type: Galleria.LOADSTART,
-                    cached: cached,
-                    rewind: false,
-                    index: index,
-                    imageTarget: self.getActiveImage(),
-                    thumbTarget: thumb,
-                    galleriaData: data
-                });
-
-                big.load( data.big, function( big ) {
-                    self._scaleImage( big, {
-                        complete: function( big ) {
-                            self.trigger({
-                                type: Galleria.LOADFINISH,
-                                cached: cached,
-                                index: index,
-                                rewind: false,
-                                imageTarget: big.image,
-                                thumbTarget: thumb
-                            });
-                            var image = self._controls.getActive().image;
-                            if ( image ) {
-                                $( image ).width( big.image.width ).height( big.image.height )
-                                    .attr( 'style', $( big.image ).attr('style') )
-                                    .attr( 'src', big.image.src );
-                            }
-                        }
-                    });
-                });
-            }
-
             // init the first rescale and attach callbacks
             self.rescale(function() {
 
@@ -1823,20 +1785,6 @@ Galleria = function() {
             // bring back cached options
             self._options.imageCrop = fullscreen.crop;
             //self._options.transition = fullscreen.transition;
-
-            // return to original image
-            var big = self.getData().big,
-                image = self._controls.getActive().image;
-
-            if ( !self.getData().iframe && image && big && big == image.src ) {
-
-                window.setTimeout(function(src) {
-                    return function() {
-                        image.src = src;
-                    };
-                }( self.getData().image ), 1 );
-
-            }
 
             self.rescale(function() {
                 self.addTimer(false, function() {
@@ -2263,7 +2211,7 @@ Galleria = function() {
                 for ( i = self._options.preload; i > 0; i-- ) {
                     p = new Galleria.Picture();
                     ndata = self.getData( n );
-                    p.preload( 'big' in ndata ? ndata.big : ndata.image );
+                    p.preload( self._options.imageSizes && 'images' in ndata ? ndata.images[ self._imageSize ] : ndata.image );
                     n = self.getNext( n );
                 }
             } catch(e) {}
@@ -2423,6 +2371,7 @@ Galleria.prototype = {
             imagePanSmoothness: 12,
             imagePosition: '50%',
             imageTimeout: undef, // 1.2.5
+            imageSizes: false, // custom
             initialTransition: undef, // 1.2.4, replaces transitionInitial
             keepSource: false,
             layerFollow: true, // 1.2.5
@@ -3339,6 +3288,17 @@ Galleria.prototype = {
                 self._stageWidth  = self.$( 'stage' ).width();
                 self._stageHeight = self.$( 'stage' ).height();
 
+                self._imageSize = 0;
+                for (var i = 1; i < self._options.imageSizes.length; i++) {
+                  // use this size if it fills the stage area
+                  var w = parseInt(self._options.imageSizes[i].split('x')[0], 10);
+                  var h = parseInt(self._options.imageSizes[i].split('x')[1], 10);
+
+                  if (w >= self._stageWidth && h >= self._stageHeight) {
+                    self._imageSize = i;
+                  }
+                }
+
                 return( self._stageWidth &&
                         self._stageHeight > 50 ); // what is an acceptable height?
             },
@@ -3514,6 +3474,7 @@ Galleria.prototype = {
                     data.iframe = href;
                 } else {
                     data.image = data.big = href;
+                    data.images = [data.image];
                 }
 
                 if ( rel ) {
@@ -3521,11 +3482,19 @@ Galleria.prototype = {
                 }
 
                 // alternative extraction from HTML5 data attribute, added in 1.2.7
-                $.each( 'big title description link layer'.split(' '), function( i, val ) {
+                $.each( 'title description link layer'.split(' '), function( i, val ) {
                     if ( elem.data(val) ) {
                         data[ val ] = elem.data(val);
                     }
                 });
+
+                // add all images sizes specified as 'image0', 'image1' etc
+                for (var s = 0; s < o.imageSizes.length; s++) {
+                  var val = 'image' + s;
+                    if ( elem.data(val) ) {
+                        data.images[ s ] = elem.data(val);
+                    }
+                }
 
                 // mix default extractions with the hrefs and config
                 // and push it into the data array
@@ -3534,7 +3503,6 @@ Galleria.prototype = {
                     title:       elem.attr('title') || '',
                     thumb:       elem.attr('src'),
                     image:       elem.attr('src'),
-                    big:         elem.attr('src'),
                     description: elem.attr('alt') || '',
                     link:        elem.attr('longdesc'),
                     original:    elem.get(0) // saved as a reference
@@ -4343,6 +4311,66 @@ this.prependChild( 'info', 'myElement' );
             self._stageWidth = width || self.$( 'stage' ).width();
             self._stageHeight = height || self.$( 'stage' ).height();
 
+            // determine best image size to use
+            if (self._options.imageSizes) {
+              var imageSize = 0;
+              for (var i = 1; i < self._options.imageSizes.length; i++) {
+                // use this size if it fills the stage area
+                var w = parseInt(self._options.imageSizes[i].split('x')[0], 10);
+                var h = parseInt(self._options.imageSizes[i].split('x')[1], 10);
+
+                if (w >= self._stageWidth && h >= self._stageHeight) {
+                  imageSize = i;
+                }
+              }
+
+              // size has changed, load new size
+              if (imageSize != self._imageSize) {
+                self._imageSize = imageSize;
+
+                var data = self.getData();
+
+                // swap to the new image size
+                if ( data ) {
+                    var newImage = new Galleria.Picture(),
+                        cached = newImage.isCached( data.images[ imageSize ] ),
+                        index  = self.getIndex(),
+                        thumb  = self._thumbnails[ index ];
+
+                    self.trigger( {
+                        type: Galleria.LOADSTART,
+                        cached: cached,
+                        rewind: false,
+                        index: index,
+                        imageTarget: self.getActiveImage(),
+                        thumbTarget: thumb,
+                        galleriaData: data
+                    });
+
+                    newImage.load( data.images[ imageSize ], function( newImage ) {
+                        self._scaleImage( newImage, {
+                            complete: function( newImage ) {
+                                self.trigger({
+                                    type: Galleria.LOADFINISH,
+                                    cached: cached,
+                                    index: index,
+                                    rewind: false,
+                                    imageTarget: newImage.image,
+                                    thumbTarget: thumb
+                                });
+                                var image = self._controls.getActive().image;
+                                if ( image ) {
+                                    $( image ).width( newImage.image.width ).height( newImage.image.height )
+                                        .attr( 'style', $( newImage.image ).attr('style') )
+                                        .attr( 'src', newImage.image.src );
+                                }
+                            }
+                        });
+                    });
+                }
+              }
+            }
+
             // scale the active image
             self._scaleImage();
 
@@ -4430,7 +4458,7 @@ this.prependChild( 'info', 'myElement' );
             return;
         }
 
-        var src = data.iframe || ( this.isFullscreen() && 'big' in data ? data.big : data.image ), // use big image if fullscreen mode
+        var src = data.iframe || ( self._options.imageSizes && 'images' in data ? data.images[ self._imageSize ] : data.image ), // use best image size
             active = this._controls.getActive(),
             next = this._controls.getNext(),
             cached = next.isCached( src ),
@@ -4560,7 +4588,7 @@ this.prependChild( 'info', 'myElement' );
                 for ( i = this._options.preload; i > 0; i-- ) {
                     p = new Galleria.Picture();
                     ndata = self.getData( n );
-                    p.preload( this.isFullscreen() && 'big' in ndata ? ndata.big : ndata.image );
+                    p.preload( self._options.imageSizes && 'images' in ndata ? ndata.images[ self._imageSize ] : ndata.image );
                     n = self.getNext( n );
                 }
             } catch(e) {}
