@@ -2690,7 +2690,7 @@ Galleria.prototype = {
 
         // bind window resize for responsiveness
         if ( options.responsive ) {
-            $win.bind( 'resize', function() {
+            $win.bind( 'resize.galleria'+this._id, function() {
                 if ( !self.isFullscreen() ) {
                     self.resize();
                 }
@@ -3590,6 +3590,7 @@ Galleria.prototype = {
     */
 
     destroy : function() {
+        $win.unbind( 'resize.galleria'+this._id);
         this.$( 'target' ).data( 'galleria', null );
         this.$( 'container' ).unbind( 'galleria' );
         this.get( 'target' ).innerHTML = this._original.html;
