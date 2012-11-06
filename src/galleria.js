@@ -3308,7 +3308,7 @@ Galleria.prototype = {
                   var w = parseInt(self._options.imageSizes[i].split('x')[0], 10);
                   var h = parseInt(self._options.imageSizes[i].split('x')[1], 10);
 
-                  if (w >= imageWidth && h >= imageHeight) {
+                  if ((isNaN(w) || w >= imageWidth) && (isNaN(h) || h >= imageHeight)) {
                     self._imageSize = i;
                   }
                 }
@@ -4344,7 +4344,7 @@ this.prependChild( 'info', 'myElement' );
                 var w = parseInt(self._options.imageSizes[i].split('x')[0], 10);
                 var h = parseInt(self._options.imageSizes[i].split('x')[1], 10);
 
-                if (w >= imageWidth && h >= imageHeight) {
+                if ((isNaN(w) || w >= imageWidth) && (isNaN(h) || h >= imageHeight)) {
                   imageSize = i;
                 }
               }
