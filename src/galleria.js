@@ -3292,12 +3292,14 @@ Galleria.prototype = {
                 self._stageHeight = self.$( 'stage' ).height();
 
                 self._imageSize = 0;
+                var imageWidth = self._stageWidth - 2*self._options.imageMargin;
+                var imageHeight = self._stageHeight - 2*self._options.imageMargin;
                 for (var i = 1; i < self._options.imageSizes.length; i++) {
                   // use this size if it fills the stage area
                   var w = parseInt(self._options.imageSizes[i].split('x')[0], 10);
                   var h = parseInt(self._options.imageSizes[i].split('x')[1], 10);
 
-                  if (w >= self._stageWidth && h >= self._stageHeight) {
+                  if (w >= imageWidth && h >= imageHeight) {
                     self._imageSize = i;
                   }
                 }
@@ -4317,13 +4319,15 @@ this.prependChild( 'info', 'myElement' );
 
             // determine best image size to use
             if (self._options.imageSizes) {
+              var imageWidth = self._stageWidth - 2*self._options.imageMargin;
+              var imageHeight = self._stageHeight - 2*self._options.imageMargin;
               var imageSize = 0;
               for (var i = 1; i < self._options.imageSizes.length; i++) {
                 // use this size if it fills the stage area
                 var w = parseInt(self._options.imageSizes[i].split('x')[0], 10);
                 var h = parseInt(self._options.imageSizes[i].split('x')[1], 10);
 
-                if (w >= self._stageWidth && h >= self._stageHeight) {
+                if (w >= imageWidth && h >= imageHeight) {
                   imageSize = i;
                 }
               }
